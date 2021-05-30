@@ -1,24 +1,24 @@
-from lzma import compress, FORMAT_XZ, CHECK_NONE, decompress, FILTER_LZMA2
+from secrets import SystemRandom
 
-from client import packaging
+random = SystemRandom()
+
+Prime = int(
+    '62613E24191987AD722016A7CD726ADA3C2B386999AF8342910233A49E11BEC95D16F4A9410B259EDCFE8BB65F63D1073BE537254D37C38247EA3BB9BD69F80EF',
+    16)
+
+Base = 2
+
+Secret = random.randint(int(
+    'BEEEFB584AFF8603AAFB550FFACFD8FA5CA47E4F88D4537127CBD2FE62145F084544B653355155B6AF99D40AE400000000000000000000000000000000000000',
+    16), int(
+    '77555D172EDFB3C24ADD1529FCC1E79C79E6CEF1B584B426B8DF63DEFD4CBB652B4AF1F40152D5922DC02486CE7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF',
+    16))  # a
 
 
-def main():
-    # Program to check if a number is prime or not
-    num = '35827166471799293901187590011469386458700646222597313289239616663581878231607847670865366492473226107023909051440722985247671490277488547367298888836712899'
-
-    pack = packaging('Data', num)
-
-    my_filters = [
-        {"id": FILTER_LZMA2},
-    ]
-
-    num1 = compress(pack, FORMAT_XZ, CHECK_NONE, None, my_filters)
-
-    num2 = decompress(num1)
-
-    print("Hello")
+def main(sharedBase, aliceSecret, Prime):
+    A = pow(sharedBase, aliceSecret, Prime)
+    print(A)
 
 
 if __name__ == "__main__":
-    main()
+    main(sharedBase, aliceSecret, Prime)

@@ -1,13 +1,22 @@
 from _thread import start_new_thread
 from base64 import b64decode, b64encode
-from json import loads
+from hashlib import sha512
+from json import dumps, loads
+from secrets import SystemRandom
 from socket import socket, AF_INET, SOCK_STREAM
 from threading import Lock
 
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.asymmetric.dh import DHPublicNumbers, DHParameterNumbers
-
 print_lock = Lock()
+
+
+def packaging(Header, Data):
+    pack1 = ['header', 'data']
+    pack2 = (Header, Data)
+
+    pack = dumps(dict(zip(pack1, pack2)))
+
+    pack_b64 = b64encode(pack.encode("utf-8"))
+    return pack_b64
 
 
 def threaded(c):  # thread function
@@ -30,24 +39,28 @@ def threaded(c):  # thread function
 
             if package['header'] == 'NewKey':  # Detect if is a NewKey request
 
-                # Create DH paramaters
-                parameters = DHParameterNumbers(
-                    int('62613E24191987AD722016A7CD726ADA3C2B386999AF8342910233A49E11BEC95D16F4A9410B259EDCFE8BB65F63D1073BE537254D37C38247EA3BB9BD69F80EF',
-                        16),
-                    2).parameters(default_backend())
+                random = SystemRandom()
 
-                # Generate new key
-                private_key = parameters.generate_private_key()
+                Prime = int(
+                    'B858D48846EAD8AA352411841C7A947CCC804B75B953E2703B2B9',
+                    16)
+
+                Base = 2
+
+                Secret = random.randint(int(
+                    '26E4D30ECCC3215DD8F3157D27E23ACBDCFE68000000000000000',
+                    16), int(
+                    '184F03E93FF9F4DAA797ED6E38ED64BF6A1F00FFFFFFFFFFFFFFFF',
+                    16))  # a
+
+                public_key = pow(Base, Secret, Prime)
 
                 # Send the public key
-                c.send(b64encode(hex(private_key.public_key().public_numbers().y).encode("utf-8")))
+                c.send(packaging('NewKey', public_key))
 
                 # Load client PUB key
-                b_peer_public_key = DHPublicNumbers(int(package['data'], 16),
-                                                    parameters.parameter_numbers()).public_key(default_backend())
-
-                # Generate shared key
-                shared_key = private_key.exchange(b_peer_public_key)
+                shared_key = sha512(str(pow(package['data'], Secret, Prime)).encode('UTF-8')).digest()
+                print(shared_key)
 
             else:
                 # Print data and send OK
@@ -58,8 +71,8 @@ def threaded(c):  # thread function
 
 
 def main():
-    host, port = str(input("Host: ")), int(input("Port: "))
-    # host, port = "192.168.1.15", 9999
+    # host, port = str(input("Host: ")), int(input("Port: "))
+    host, port = "192.168.1.15", 9999
 
     s = socket(AF_INET, SOCK_STREAM)
     s.bind((host, port))
