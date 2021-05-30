@@ -58,8 +58,8 @@ def threaded(c):  # thread function
 
 
 def main():
-    host = "192.168.1.15"
-    port = 9999
+    host, port = str(input("Host: ")), int(input("Port: "))
+    # host, port = "192.168.1.15", 9999
 
     s = socket(AF_INET, SOCK_STREAM)
     s.bind((host, port))

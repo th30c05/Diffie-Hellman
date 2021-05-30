@@ -1,35 +1,23 @@
-import base64
-from lzma import *
+from lzma import compress, FORMAT_XZ, CHECK_NONE, decompress, FILTER_LZMA2
 
-"""
-@jit(forceobj=True)
-def main():
-    key_parameters = dh.generate_parameters(generator=2, key_size=512, backend=default_backend())
-
-    a_private_key = key_parameters.generate_private_key()
-    a_peer_public_key = a_private_key.public_key()
-
-    b_private_key = key_parameters.generate_private_key()
-    b_peer_public_key = b_private_key.public_key()
-
-    a_shared_key = a_private_key.exchange(b_peer_public_key)
-    b_shared_key = b_private_key.exchange(a_peer_public_key)
-
-    print('a_secret: ' + str(a_shared_key))
-    print('b_secret: ' + str(b_shared_key))
-"""
+from client import packaging
 
 
 def main():
     # Program to check if a number is prime or not
-
     num = '35827166471799293901187590011469386458700646222597313289239616663581878231607847670865366492473226107023909051440722985247671490277488547367298888836712899'
-    num = base64.b64encode(num)
-    compressor = LZMACompressor(FORMAT_XZ, CHECK_SHA256)
-    hello = compressor.compress(bytes(num))
-    print(hello)
-    # To take input from the user
-    # num = int(input("Enter a number: "))
+
+    pack = packaging('Data', num)
+
+    my_filters = [
+        {"id": FILTER_LZMA2},
+    ]
+
+    num1 = compress(pack, FORMAT_XZ, CHECK_NONE, None, my_filters)
+
+    num2 = decompress(num1)
+
+    print("Hello")
 
 
 if __name__ == "__main__":
