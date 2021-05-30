@@ -24,8 +24,7 @@ def send_TCP(data_to_send, host, port):
         tcp_client.connect((host, port))
         tcp_client.sendall(data_to_send)
 
-        received = tcp_client.recv(1024, )
-        received = str(b64decode(received.decode("utf-8"))).removeprefix("b'").removesuffix("'")
+        received = str(b64decode(tcp_client.recv(1024, ).decode("utf-8"))).removeprefix("b'").removesuffix("'")
 
     finally:
         tcp_client.close()
@@ -50,7 +49,6 @@ def AES_key_gen(host, port):
     public_key = pow(Base, Secret, Prime)
 
     package = send_TCP((packaging('NewKey', public_key)), host, port)
-    # package_decoded = str(b64decode(package.decode("utf-8"))).removeprefix("b'").removesuffix("'")
 
     # Load json
     package = loads(package)
