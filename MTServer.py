@@ -1,6 +1,5 @@
 from _thread import start_new_thread
 from base64 import b64decode, b64encode
-from hashlib import sha512
 from json import dumps, loads
 from secrets import SystemRandom
 from socket import socket, AF_INET, SOCK_STREAM
@@ -20,6 +19,7 @@ def packaging(Header, Data):
 
 
 def threaded(c):  # thread function
+    global shared_key
 
     while True:
 
@@ -38,41 +38,42 @@ def threaded(c):  # thread function
             package = loads(data_decoded)
 
             if package['header'] == 'NewKey':  # Detect if is a NewKey request
+                while True:
+                    random = SystemRandom()
 
-                random = SystemRandom()
+                    Prime = int(
+                        'F32D6D650FB74CDD13F737E5B8C48757325630FA755FAA91D1539',
+                        16)
 
-                Prime = int(
-                    'B858D48846EAD8AA352411841C7A947CCC804B75B953E2703B2B9',
-                    16)
+                    Base = 2
 
-                Base = 2
+                    Secret = random.randint(int(
+                        '26E4D30ECCC3215DD8F3157D27E23ACBDCFE68000000000000000',
+                        16), int(
+                        '184F03E93FF9F4DAA797ED6E38ED64BF6A1F00FFFFFFFFFFFFFFFF',
+                        16))  # a
 
-                Secret = random.randint(int(
-                    '26E4D30ECCC3215DD8F3157D27E23ACBDCFE68000000000000000',
-                    16), int(
-                    '184F03E93FF9F4DAA797ED6E38ED64BF6A1F00FFFFFFFFFFFFFFFF',
-                    16))  # a
+                    public_key = pow(Base, Secret, Prime)
 
-                public_key = pow(Base, Secret, Prime)
+                    # Load client PUB key
+                    shared_key = bytes(str(pow(package['data'], Secret, Prime)), 'UTF-8')
 
-                # Send the public key
-                c.send(packaging('NewKey', public_key))
-
-                # Load client PUB key
-                shared_key = sha512(str(pow(package['data'], Secret, Prime)).encode('UTF-8')).digest()
-                print(shared_key)
+                    if len(shared_key) == 64:
+                        # Send the public key
+                        c.send(packaging('NewKey', public_key))
+                        break
 
             else:
                 # Print data and send OK
-                print(package['data'])
                 c.send(b64encode("200 OK".encode("utf-8")))
+                print(package['data'])
 
     c.close()
 
 
 def main():
-    # host, port = str(input("Host: ")), int(input("Port: "))
-    host, port = "192.168.1.15", 9999
+    host, port = str(input("Host: ")), int(input("Port: "))
+    # host, port = "192.168.1.15", 9999
 
     s = socket(AF_INET, SOCK_STREAM)
     s.bind((host, port))
@@ -80,10 +81,9 @@ def main():
 
     # put the socket into listening mode
     print("socket is listening")
+    s.listen(0)
 
     while True:
-        s.listen(0)
-
         # a forever loop until client wants to exit
         # establish connection with client
         c, addr = s.accept()
