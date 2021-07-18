@@ -1,4 +1,12 @@
+from _thread import start_new_thread
+from socket import socket, AF_INET, SOCK_STREAM
+from textwrap import indent
 from threading import Lock
+
+from functions import decrypt
+from functions import depackaging
+from functions import get_secret
+from functions import packaging
 
 print_lock = Lock()
 
@@ -21,12 +29,10 @@ def threaded(c, debug):  # thread function
                 print_lock.release()
                 break
 
-            from functions import depackaging
             package = depackaging(data)
 
             if package['header'] == 'NewKey':  # Detect if is a NewKey request
                 while True:
-                    from functions import get_secret
 
                     Base, Prime, Secret, Pub = get_secret()
 
@@ -34,19 +40,17 @@ def threaded(c, debug):  # thread function
                     shared_key = bytes(str(pow(package['data'], Secret, Prime)), 'UTF-8')
 
                     if len(shared_key) == 64:
-                        if debug: print(shared_key)
+                        if debug:
+                            print(indent('Key: ' + str(shared_key), '  '))
 
                         # Send the public key
-                        from functions import packaging
                         c.send(packaging('NewKey', Pub))
                         break
 
             else:
-                nonce, ciphertext, tag = bytes.fromhex((package['data'])['nonce']), bytes.fromhex(
-                    (package['data'])['ciphertext']), bytes.fromhex((package['data'])['tag'])
-                from functions import decrypt
-                data = decrypt(shared_key, nonce, ciphertext, tag).decode('UTF-8')
-                print(data)
+                data = decrypt(shared_key, bytes.fromhex((package['data'])['nonce']), bytes.fromhex(
+                    (package['data'])['ciphertext']), bytes.fromhex((package['data'])['tag'])).decode('UTF-8')
+                print(indent("Data: " + data + "\n", "  "))
 
 
 def main():
@@ -58,13 +62,9 @@ def main():
 
     host, port = str(input("Host: ")), int(input("Port: "))
 
-    from socket import socket, AF_INET, SOCK_STREAM
     s = socket(AF_INET, SOCK_STREAM)
     s.bind((host, port))
-    print("socket binded to port", port)
-
-    # put the socket into listening mode
-    print("socket is listening")
+    print("\nSocket binded to port", port, "\nSocket is listening \n")
     s.listen(0)
 
     while True:
@@ -74,10 +74,9 @@ def main():
 
         # lock acquired by client
         print_lock.acquire()
-        print('Connected to :', addr[0], ':', addr[1])
+        print('Conexion from:', addr[0], 'By port number:', addr[1])
 
         # Start a new thread and return its identifier
-        from _thread import start_new_thread
         start_new_thread(threaded, (c, debug,))
 
 

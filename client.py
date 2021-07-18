@@ -1,15 +1,25 @@
+from json import loads
+from socket import socket, AF_INET, SOCK_STREAM
+from textwrap import indent
+from time import sleep
+
+from functions import depackaging
+from functions import get_secret
+from functions import packaging, encrypt
+
+
 def create_TCP(host, port):
-    from socket import socket, AF_INET, SOCK_STREAM
     tcp_client = socket(AF_INET, SOCK_STREAM)
+    while True:
+        try:
+            tcp_client.connect((host, port))
 
-    try:
-        tcp_client.connect((host, port))
+        except:
+            print("Error can't connect to " + host + ":" + str(port))
+            sleep(1)
 
-    except:
-        print("Error can't connect to " + host + ":" + port)
-
-    else:
-        return tcp_client
+        else:
+            return tcp_client
 
 
 def send_TCP(data_to_send, tcp_client):
@@ -22,12 +32,10 @@ def send_TCP(data_to_send, tcp_client):
 def AES_key_gen(host, port):
     while True:
 
-        from functions import get_secret
         Base, Prime, Secret, Pub = get_secret()
 
         tcp_client = create_TCP(host, port)
 
-        from functions import packaging, depackaging
         package = depackaging(send_TCP((packaging('NewKey', Pub)), tcp_client))
 
         # Generate the shared key
@@ -45,21 +53,21 @@ def main():
     else:
         debug = False
 
-    host_ip, server_port = str(input("Host: ")), int(input("Port: "))
+    host, port = str(input("Host: ")), int(input("Port: "))
 
     while True:
 
-        data = input("MSG: ")
+        data = 'aa'  # input("MSG: ")
 
-        shared_key, tcp_client = AES_key_gen(host_ip, server_port)
+        shared_key, tcp_client = AES_key_gen(host, port)
 
-        if debug: print(shared_key)
+        if debug:
+            print('  Key: ', end="")
+            print(shared_key)
 
-        from functions import packaging, encrypt
-        from json import loads
         package = packaging("Data", loads(encrypt(shared_key, data.encode('UTF-8'))))
         tcp_client.send(package)
-        print("Bytes Sent: {}".format(data))
+        print(indent("Bytes Sent: {} \n".format(data), "  "))
         tcp_client.close()
 
 
