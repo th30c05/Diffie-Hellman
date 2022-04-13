@@ -1,4 +1,1 @@
-Nuitka>=0.6.15.1
-pip>=21.1.2
-pycryptodomex>=3.10.1
-setuptools>=57.0.0
+pycryptodomex
