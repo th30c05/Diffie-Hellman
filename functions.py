@@ -2,6 +2,7 @@ from json import dumps
 from json import loads
 from random import SystemRandom
 
+import catch as catch
 from Cryptodome.Cipher import AES
 from Cryptodome.Random import get_random_bytes
 
@@ -38,15 +39,14 @@ def encrypt(Key, Data):
     cipher = AES.new(Key, AES.MODE_SIV, nonce)
     ciphertext, tag = cipher.encrypt_and_digest(Data)
 
-    json_k, json_v = ['nonce', 'ciphertext', 'tag'], [nonce.hex(), ciphertext.hex(), tag.hex()]
-
-    result = dumps(dict(zip(json_k, json_v))).encode('UTF-8')
+    result = dumps(dict(zip(['nonce', 'ciphertext', 'tag'], [nonce.hex(), ciphertext.hex(), tag.hex()]))).encode(
+        'UTF-8')
 
     return result
 
 
-def decrypt(key, nonce, ciphertext, tag):
-    cipher = AES.new(key=key, mode=AES.MODE_SIV, nonce=nonce)
-    data = cipher.decrypt_and_verify(ciphertext, tag)
+def decrypt(Key, Nonce, Ciphertext, Tag):
+    cipher = AES.new(key=Key, mode=AES.MODE_SIV, nonce=Nonce)
+    data = cipher.decrypt_and_verify(Ciphertext, Tag)
 
     return data

@@ -29,6 +29,7 @@ def threaded(c, debug):  # thread function
                 print_lock.release()
                 break
 
+
             package = depackaging(data)
 
             if package['header'] == 'NewKey':  # Detect if is a NewKey request
@@ -49,7 +50,7 @@ def threaded(c, debug):  # thread function
 
             else:
                 data = decrypt(shared_key, bytes.fromhex((package['data'])['nonce']), bytes.fromhex(
-                    (package['data'])['ciphertext']), bytes.fromhex((package['data'])['tag'])).decode('UTF-8')
+(package['data'])['ciphertext']), bytes.fromhex((package['data'])['tag'])).decode('UTF-8')
                 print(indent("Data: " + data + "\n", "  "))
 
 
